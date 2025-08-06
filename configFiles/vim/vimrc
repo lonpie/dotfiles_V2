@@ -1,0 +1,436 @@
+"Some of the ways to edit a filename under the cursor are
+"• gf - Edit existing file under cursor in same window
+"• C-Wf - Edit existing file under cursor in split window
+"• C-WC-F - Edit existing file under cursor in split window
+"• C-Wgf - Edit existing file under cursor in new tabpage
+
+""""""""""""""""""""""""
+"Vimrc Pierre Longavesne"
+"""""""""""""""""""""""""
+" Temp
+"nnoremap <leader>v O\begin{verbatim}<ESC>jo\end{verbatim}<ESC>
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"                     ZONE DE CRASH TEST                        "
+" (contient les mapping et autres tests pas encore sure a 100%) "
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let g:mapleader=','
+nnoremap <leader>k  <Plug>(Vman)
+
+" crossdebug rpi buildroot
+let g:termdebugger=['../buildroot-2025.05/output/host/bin/aarch64-buildroot-linux-gnu-gdb', '-ix', '../buildroot-2025.05/output/staging/usr/share/buildroot/gdbinit', 'main.elf', '-ex', 'target remote 192.168.1.41:2345']
+" affiche le contenu des regitres et permet la selection pour en coller un
+nnoremap "p :reg <bar> exec 'normal! "'.input('>').'p'<CR>
+" affiche les buffers ouvert et permter la selection pour en ouvrir un
+nnoremap <leader>b :ls <bar> exec ':b'.input('>')<CR>
+cnoreabbrev bb ls <bar> exec ':b'.input('>')
+
+packadd! termdebug
+
+nnoremap J mbJ`b
+vnoremap J mbJ`b
+
+"function Search(wordToFind)
+"exe ":lvimgrep /".expand(a:wordToFind)."/gj %"
+"exe ":lopen"
+"endfunc
+
+" **************** TEST copier coller entre instance de vim *****************
+" charger viminfo puis coller le registre sans nom
+nnoremap <leader>p :rv<CR>p 
+augroup syncViminfo
+    autocmd!
+    " actualise viminfo pres avoir copié
+    "autocmd TextYankPost * :wv<CR>
+    autocmd TextYankPost * execute "normal! :wv<CR>"
+augroup END
+
+function Parse_json()
+    let s:js_data = readfile('out.json')
+    let s:dictData = js_decode(join(s:js_data))
+
+    let s:matches = s:dictData["matches"]
+
+    let s:dictMatches = {}
+    let s:nbMatches = 1
+    :highlight LT_err_group ctermbg=red guibg=red
+    for i in s:matches 
+        let s:nbMatches = s:nbMatches + 1
+        let l:line = byte2line(i["offset"])
+        let l:col =  i["offset"]-line2byte(l:line)+2
+        let l:length =  i["length"]
+        echo l:line . " " . l:col . " " . l:length
+        call matchaddpos("LT_err_group", [[l:line, l:col, l:length]])
+        "let s:dictMatches[s:nbMatches] = {"message":i["message"],"offset":i["offset"], "length":i["length"], "line":byte2line(i["offset"]), "rule":i["rule"], "replacements":i["replacements"]}
+
+    endfor
+    echo s:dictMatches
+endfunc
+
+
+" cursor style
+let &t_ti.="\e[1 q"
+let &t_SI.="\e[5 q"
+let &t_EI.="\e[1 q"
+let &t_te.="\e[0 q"
+
+
+" différentiation de Tab et Ctrl-i (cf ~/.Xresources)   
+"noremap E[Y <C-i>
+"inoremap E[Y <C-i>
+
+nnoremap <C-s> :lnext<CR>
+nnoremap <C-S-s> :lpreviou<CR>
+
+nnoremap <C-q> :cnext<CR>
+nnoremap <C-S-q> :cprevious<CR>
+
+
+
+
+"augroup pyCmdGroup
+"autocmd!
+"autocmd Filetype python :hi CursorLine term=NONE cterm=NONE
+"autocmd Filetype python :hi CursorLine ctermbg=234 
+"augroup END
+augroup cAbbrGroup
+    autocmd!
+    autocmd Filetype c,cpp :iabbrev /* /* */kjhhi
+    autocmd Filetype c,cpp :iabbrev intmain int main(int argc, char **argv)<CR>{<CR><CR>return 0;<CR>}kjkki
+    autocmd Filetype c,cpp :iabbrev while() while ( )<CR>{<CR><CR>}kjkkk%hi
+    autocmd Filetype c,cpp :iabbrev for() for ( )<CR>{<CR><CR>}kjkkk%hi
+    autocmd Filetype c,cpp :iabbrev if()   if ( )<CR>{<CR><CR>}kjkkk%hi
+    autocmd Filetype c,cpp :iabbrev elif() else if ( )<CR>{<CR><CR>}kjkkk%hi
+    autocmd Filetype c,cpp :iabbrev else() else<CR>{<CR><CR>}kjki
+augroup END
+iabbrev @@ pierrelonga13@gmail.com
+cnoreabbrev w!! w !sudo tee % >/dev/null
+"""""""""""""""""""""""""""""""""""""
+"               PLUGINS             "
+"""""""""""""""""""""""""""""""""""""
+" si probleme de certificat git :
+" git config --global http.sslVerify false
+call plug#begin('~/.vim/plugged/')
+Plug 'tpope/vim-commentary' 
+Plug 'tpope/vim-fugitive'
+Plug 'vim-utils/vim-man'
+call plug#end()
+"""""""""""""""""""""""""""""""""""""
+" CONFIGAURATION PARAMETRES GÉNÉRAUX"
+"""""""""""""""""""""""""""""""""""""
+" set background=dark
+" colorscheme myDesert 
+
+" rechargement automatique des fichiers modifiés
+set autoread
+
+" force l'encodage en utf-8
+set encoding=utf-8
+
+"active la colorisation syntaxique
+syntax on
+
+"fichiers de tags
+set tags=~/.vim/tags/tags,~/.vim/tags/tags_all,tags
+
+"context minimum autour du curseur
+set scrolloff=5
+
+"montre le mode actuel
+set showmode
+"affiche les commandes executées
+set showcmd
+
+"activation du plugin natif omnifunc
+filetype plugin indent on
+set omnifunc=syntaxcomplete#Complete
+
+"menu autocompletion 
+set wildmenu
+set wildmode=longest:full,full
+set completeopt=longest,menuone
+
+"configuration des replis
+set foldmethod=syntax
+set foldlevel=999
+set foldcolumn=1
+
+"empêche de couper les lignes sur des mots
+set linebreak
+
+"souligne la ligne actuelle
+set cursorline
+hi CursorLine cterm=underline ctermbg=234
+
+hi texItalStyle cterm=bold
+hi texEmphStyle cterm=bold
+hi exBoldItalStyle cterm=bold
+hi exItalBoldStylec term=bold
+
+
+"langue correction orthographique
+set spelllang=en
+
+
+"désactive complètement la souris pour plus être .... par le pad tactile
+set mouse-=a
+
+" numéros de ligne relatifs et absolues
+set nu 
+set rnu 
+
+"Option concernant les recherches
+set ignorecase 
+set smartcase
+" highlight les resultats
+set hlsearch
+" affichage dynamique des resultats en cours de frappe
+set incsearch "incserach
+" pas de recherche circulaire
+set nowrapscan
+
+" navigation entre les lignes wraper
+"nnoremap j gj
+"nnoremap k gk
+"couper les lignes 
+"set wrap
+" ne pas wrapper les lignes mais les couper au bout de 100 caractéres
+" on peut couper manuellement les lignes avec gq
+" puis les rassembler avec J 
+set nowrap
+" couper les lignes tous les 100 caractéres
+set textwidth=100
+
+" recopie l'indentation de la ligne precedente
+set autoindent
+set smartindent
+
+" Gestion des tabulations 
+"nb d'espace pour une tab palcé avec < ou >
+set shiftwidth=4
+" nombre d'espace placé en mode insertion (touche tab)
+"  -1 signifie egal a shiftwidth
+set softtabstop=-1
+" remplacer les tabulation par des espace
+"  cela evite que des paque de 8 espace deviennent tabulation
+set expandtab
+" parametre par default a ne jamais changer d'apres la doc
+set tabstop=8
+set smarttab
+" desactive le remplacement des tabulation par des espaces 
+"  pour les Makefile qui se servent des tab comme delimiter
+augroup makeReelTab
+    autocmd!
+    autocmd Filetype make set noexpandtab
+augroup END
+
+
+
+" statusline toujours visible
+set laststatus=2
+" format et couleur de la statusline
+set statusline=%f\ %l\|%c\ %m%=%p%%\ (%Y%R)
+hi StatusLine       ctermfg=34   ctermbg=0
+hi StatusLineNC     ctermfg=8    ctermbg=0
+
+""""""""""""
+" MAPPING  "
+""""""""""""
+" purge le mot actuellement recherché
+nnoremap <C-n> :let @/=""<ESC>
+" toggle rapide ouverture/fermeture fold
+nnoremap <space> za
+" création d'onglet 
+nnoremap <leader>tn :tabnew<CR>
+" TODO : separer les mapping dans des groupes d'autocommandes en fonction des types de
+" fichiers ouvert (par exemple <F9> spécifique au latex)
+"
+"met à jour les tags des fichiers locaux
+"nnoremap <F2> :!ctags --append -R --kinds-C=* *.[ch]<CR>
+"nnoremap <F2> :silent! :!ctags --append -R --kinds-C=* *.[ch]<CR> :redraw!<CR>
+"nnoremap <F2> :silent! :!ctags --append -R --kinds-C=* --exclude=* --exclude-exception=*.[hc] <CR> :redraw!<CR>
+nnoremap <F2> :!ctags --append -R --kinds-C=* --exclude=* --exclude-exception=*.[hc] <CR> 
+
+"compile le code de la fenêtre actuelle
+noremap <F5> :silent! :call CodeCompil() \| :redraw!<CR>
+
+"execute le code de la fenêtre actuelle
+noremap <F6> :call CodeExec()<CR>
+"appelle la fonction associé a <F9>
+noremap <F9> :call FunctionF9()<CR>
+noremap <leader><F9> :new /home/pierre/Documents/rapport/inge_sn/glossaire/SN_glossaire.tex<CR>
+
+"appel la fonction d'auto indentation
+nnoremap == :call AutoIndent()<CR>
+
+"ouverture et mise a jour rapide du virmc
+noremap <leader>ev :vsplit $MYVIMRC<CR>
+noremap <leader>es :source $MYVIMRC<CR>
+"rempap le escape par la combinaison de touche kj 
+"inoremap <ESC> <NOP>
+inoremap kj <ESC>
+
+
+"appel la fonction ToggleLineNum 
+nnoremap <leader>n :call BetterToggleLineNum()<CR>
+
+"arrête d'utiliser les touches fléchées!!!
+noremap <left> <<
+noremap <right> >>
+vnoremap <left> <gv
+vnoremap <right> >gv
+inoremap <left> <nop>
+inoremap <right> <nop>
+inoremap <up> <nop>
+inoremap <dowun> <nop>
+
+"deplacement rapide entre les fenêtres
+
+nnoremap <C-j> <C-W>j
+nnoremap <C-k> <C-W>k
+nnoremap <C-h> <C-W>h
+nnoremap <C-l> <C-W>l
+"deplacement des fenêtres
+execute "set <M-j>=\ej"
+execute "set <M-k>=\ek"
+execute "set <M-h>=\eh"
+execute "set <M-l>=\el"
+nnoremap <A-j> <C-W>J
+nnoremap <A-k> <C-W>K
+nnoremap <A-h> <C-W>H
+nnoremap <A-l> <C-W>L
+
+"autocmd FileType c noremap c <ESC>1i//kj
+
+"désactive les numéros relatifs pour la quickfixlist
+autocmd FileType qf set nornu 
+
+"autocmd BufReadPre call AutoIndent()<CR>
+
+function BetterToggleLineNum()
+    set rnu!
+endfunc
+
+"fonction pour executer le code en fonction de l'extension du fichier source
+function CodeCompil()
+    let actualFileId = win_getid()      "sauvegarde la win actuelle
+    let actualBufferId = bufnr('%')     "sauvegarde le buffer actuel
+    let fileExtension = expand("%:e")   "extrait l'extension du fichier 
+    if fileExtension ==? "py"
+        "vert term ./env_pyvis/bin/python3 %
+        "vert term ./pyEnvOsm/bin/python3 %
+        "TODO remplacer la commande python ci dessus
+        exe ":wa"
+        compiler pyunit
+        set makeprg=python3\ %
+        "set makeprg=./env_pyvis/bin/python3\ %
+        write
+        make
+        copen
+    elseif fileExtension ==? "c" || fileExtension ==? "h" || fileExtension ==? "cpp"
+        compiler gcc
+        set makeprg=make
+        make
+        copen
+    elseif fileExtension ==? "asm" || fileExtension ==? "s"
+        compiler gcc
+        set makeprg=make
+        write
+        make 
+        copen
+    elseif fileExtension ==? "plt" || fileExtension ==? "gnuplot"
+        "exe ":wa"
+        make
+        "exe "!gnuplot % > %.pdf" 
+        "exe "!gnuplot %" 
+        "exe "!atril %.pdf &"
+    elseif fileExtension ==? "tex" 
+        exe ":wa"
+        make
+    else
+        echo fileExtension." : Extension de fichier non prise en charge..."
+    endif 
+    "retourne dans la win précédente
+    call win_gotoid(actualFileId)   
+    "ouvre le buffer précédent
+    execute "b".actualBufferId      
+endfunc
+"fonction pour executer le code
+" TODO : fermer l'ancienne window de make exec
+function CodeExec()
+    let fileExtension = expand("%:e")   "extrait l'extension du fichier 
+    if fileExtension ==? "tex"
+        echo expand("%:r")
+        exec "!make view"
+        "exec "!atril out.pdf 2>/dev/null >/dev/null &" 
+        "exec "!atril ".expand("%:r").".pdf 2>/dev/null >/dev/null &" 
+    elseif fileExtension ==? "md"
+        exec "vert term mdp ".expand("%:r").".md"
+    elseif fileExtension ==? "c" || fileExtension ==? "h" || fileExtension ==? "cpp"
+        let actualFileId = win_getid() "sauvegarde la win actuelle
+        execute "term make exec" 
+        call win_gotoid(actualFileId) "retourne dans la win precedente"
+    else
+        echo fileExtension." : Extension de fichier non prise en charge..."
+    endif 
+endfunc
+
+"fonction associé a F9
+function FunctionF9()
+    let fileExtension = expand("%:e")   "extrait l'extension du fichier 
+    if fileExtension ==? "tex" 
+        exe "!make gls"
+        "exe "!makeglossaries out.glo"
+    else
+        echo fileExtension." : Extension de fichier non prise en charge..."
+    endif
+endfunc
+
+"fonction d'auto indentation
+function AutoIndent()
+    let actualPos = getcurpos()
+    "let actualNumLine = line(".")
+    execute "normal! gg=G"
+    "execute "normal!".expand(actualNumLine)."gg"
+    "execute "normal! zz"
+    call cursor(actualPos[1], actualPos[2])
+endfunc
+
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"   RECHERCHE   
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" patern des fichier a eviter lors des recherches
+let g:grepIgnoreFile="*.o,*.elf,tags"
+"Recherche dans tous le repertoire projet un mot passé en argument
+command -nargs=1 ProjSearch call ProjSearch("<args>")
+function ProjSearch(wordToFind)
+    :let wildignoreBak = &wildignore
+    :let &wildignore=&wildignore.",".g:grepIgnoreFile 
+    execute ":vimgrep /".expand(a:wordToFind)."/gj *"
+    :copen 
+    :let &wildignore=wildignoreBak
+endfunc
+" mapping associé a la fonction projSearch
+nnoremap <leader>S :ProjSearch <cword> <CR>
+
+"Recherche dans le fichier actuel le mot passé en argument -> result local
+"list
+command -nargs=1 Search call Search("<args>")
+function Search(wordToFind)
+    exe ":lvimgrep /".expand(a:wordToFind)."/gj %"
+    exe ":lopen"
+endfunc
+" mapping associé à la fonction Search
+nnoremap <leader>s :Search <cword> <CR>
+
+"Recherche tous les T.O.D.O du projet courant
+nnoremap <leader>t :vimgrep TODO * <CR> :copen<CR>
+
+" colorscheme myDesert 
+colorscheme myHabamax
+" hi FoldColumn term=standout ctermfg=LightGreen guifg=#585858
+" set background=dark
+" hi CursorLine cterm=NONE ctermbg=234
+" hi CursorLineNr cterm=NONE ctermbg=234
+" hi FoldColumn ctermfg=46

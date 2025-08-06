@@ -1,0 +1,57 @@
+!pour les mappages de vim (par exemple differencier <C-i> et tab)
+XTerm*metaSendsEscape: true
+XTerm*eightBitInput:   true
+xterm*eightBitOutput:  true
+
+!Ctrl-Shift-C copier dans xterm
+!Ctrl-Shift-V coller dans xterm
+!Ctrl-i envoie un \033[Y  \E[Y 
+!XTerm*Translations: #override Ctrl<Key>i:string("E[Y") \n\
+!Shift Ctrl <KeyPress> C: copy-selection(CLIPBOARD) \n\
+!Shift Ctrl <KeyPress> V: insert-selection(CLIPBOARD)              
+xterm*vt100*translations: #override                     \
+Shift Ctrl <KeyPress> C: copy-selection(CLIPBOARD) \n\
+Shift Ctrl <KeyPress> V: insert-selection(CLIPBOARD) 
+
+XTerm*termName: xterm-256color
+xterm*borderWidth: 0
+xterm*faceName: Nimbus Mono PS Regular
+!#ifdef LenovoV15Arch
+xterm*faceSize: 12.5
+!#endif
+!#ifdef HP255debian
+!xterm*faceSize: 8.5
+!#endif
+! xterm*Background: grey3
+xterm*Background: grey6
+xterm*Foreground: white
+Xmessage*font Xmessage*font: -adobe-*-*-r-*-*-*-100-*-*-p-*-*-*
+
+xterm*selectToClipboard: true
+
+XTerm*visualBell: False
+
+
+! ----------------------------
+
+! let there be colors
+!XTerm*termName: xterm-256color
+! dark background
+!xterm*Background: black
+!xterm*Foreground: white
+
+
+
+!xterm*selectToClipboard: true
+! use a nice font
+!xterm*faceName: Nimbus Mono PS Regular:style=Book:antialias=True
+! make the font readable
+!xterm*faceSize: 9
+! make the meta key work
+!xterm*eightBitInput: false
+!xterm*eightBitOutput: true
+! have no border
+!xterm*borderWidth: 0
+
+
+! give normal copy/paste from system

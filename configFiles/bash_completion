@@ -1,0 +1,4 @@
+if [ -f ~/.bash/complete_alias ]; then
+    # see : https://github.com/cykerway/complete-alias
+    . ~/.bash/complete_alias
+fi

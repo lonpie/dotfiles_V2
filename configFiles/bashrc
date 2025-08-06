@@ -1,0 +1,98 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+
+#remap les terminaux sous X pour supprimer les nobreakspaces et remapper verMaj en escape
+if [ -v DISPLAY ];then 
+    setxkbmap -option caps:escape
+    xmodmap -e "keycode 65 = space space space space space space space space space "
+fi
+
+######################################
+# Function
+######################################
+if [ -f ~/.bash/bashFunc ]; then
+    . ~/.bash/bashFunc
+fi
+######################################
+# Alias
+######################################
+if [ -f ~/.bash/bashAliases ]; then
+    . ~/.bash/bashAliases
+fi
+short_prompt()
+{
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\][\j]-$(date "+%H:%M")-\u\[\033[00m\]\$ $(print_git_info)$(new_line)'
+}
+long_prompt()
+{
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\][\j]-$(date "+%H:%M")-\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ $(print_git_info)$(new_line)'
+
+}
+
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+    *) return;;
+esac
+
+#active la sauvegarde de l'historique
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+if [ "$(id -u)" -eq 0 ]; then
+    export PATH=$PATH:/sbin
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;31m\][\j]-\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$  $(print_git_info) $(new_line)'
+else
+    export PATH=$PATH:/home/pierre/.local/bin
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\][\j]-$(date "+%H:%M")-\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ $(print_git_info) $(new_line)'
+fi
+
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+export HISTTIMEFORMAT="%F %T : "
+# Si une commande commence par un espace ne pas la sauvegardé dans l'historique
+export HISTCONTROL=ignoreboth
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+        . /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+        . /etc/bash_completion
+    fi
+fi
+#editeur de texte par defaut
+EDITOR=vi
+# le shell utilise les commandes vi
+#set -o vi
+
+
+export FCEDIT=vi    #editeur de texte pour la commande fc
+export PATH="$PATH:"/opt/microchip/xc8/v2.46/bin""
+export PATH="$PATH:"/opt/microchip/xc-dsc/v3.00/bin""
+export PATH="$PATH:"/opt/microchip/xc16/v2.10/bin""
+export PATH="$PATH:"/opt/microchip/xc32/v4.35/bin""
+export PATH="$PATH:"/opt/microchip/mplabx/v6.20/mplab_platform/mplab_ipe/""
+
+# numéro de lignes dans les man pages, la variable MANWIDTH est passée grace a l'aliase de man (voir bash_alias)
+export MANPAGER="less -N"
+
+# Commandes executées à chaque fois que le prompt est affiché
+#   exemple : export PROMPT_COMMAND=("history -a" "echo lol")
+export PROMPT_COMMAND=("history -a" "history -n")
+

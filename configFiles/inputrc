@@ -1,0 +1,81 @@
+# /etc/inputrc - global inputrc for libreadline
+# See readline(3readline) and `info rluserman' for more information.
+
+# Be 8 bit clean.
+set input-meta on
+set output-meta on
+
+# see /usr/share/doc/bash/inputrc.arrows for other codes of arrow keys
+
+# do not bell on tab-completion
+# set bell-style none
+# set bell-style visible
+
+
+# Configuration pour utiliser les binding de vi
+set editing-mode vi
+# affiche le mode courant au début de la ligne
+set show-mode-in-prompt on
+# modifie le curseur et la couleur du 'cmd' en fonction du mode actuel
+# '(ins)' en blanc \e[0m en mode normal et en rouge quand on est en mode commande
+# curseur clignotant tout le temps :
+#  - en bare en insertion \e[5 q
+#  - en rectangle en commande \e[2 q
+set vi-ins-mode-string "\1\e[0m\2(ins)\1\e[5 q\2"
+set vi-cmd-mode-string "\1\e[0;91m\2(cmd)\1\e[0m\e[1 q\2"
+
+# en cas de completion ambigue, la premiére tabulation affiche la liste des
+# elements potentiels pour la completion, les tabulations suivante
+# autocompletent directement dans la ligne de commande de maniére cyclique
+set show-all-if-ambiguous on
+# autocompletion case insensitive
+set completion-ignore-case On
+control-i: menu-complete
+
+# Colorisation des completions
+# affiche les propositions de completion en couleur en fonction de leur type
+set colored-stats on
+# Color le prefix actuel
+set colored-completion-prefix On
+# Color the common prefix in menu-complete, aucune différences ?
+set menu-complete-display-prefix On
+#set completion-prefix-display-length 2 # ancienne version 
+
+# recherche dans l'historique en fonction de la ligne actuelle
+set keymap vi-command
+j: history-search-forward
+k: history-search-backward
+
+# configure le raccourci C-r pour la fonction vi-redo
+"\C-r": nop
+set keymap vi-command
+"\C-r": vi-redo  
+set keymap vi-insert
+"\C-r": nop 
+"kj": vi-movement-mode  
+
+# ***********************
+# **** TEST EN COURS ****
+# ***********************
+"\C-o":" cd_prev\n"
+"\C-p":" cd_next\n"
+# expantion des alias sur la ligne de commande (Ctrl-Alt-l)
+"\e\C-l": alias-expand-line
+# expantion de tous ce qui peut l'etre
+"\e\C-m": shell-expand-line
+
+# affiche brievement la parenthése correspondante lorsque l'on entre une parenthése fermante
+set blink-matching-paren on
+
+# expand des *
+"\C-x\C-n": glob-expand-word
+# test macro
+#Control-o: "> out"
+
+
+#control-i: complete
+set keymap vi-insert
+"\C-x\C-h": dynamic-complete-history
+#"\C-x\C-f": complete-filename
+
+

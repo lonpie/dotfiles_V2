@@ -1,0 +1,452 @@
+#!/bin/bash
+
+
+# override de la fonction cd pour sauvegarder les anciens repertoires dans une liste globale
+PATH_HIST=($PWD)
+IND_PATH_HIST=0
+function cd()
+{
+    max_path_save=20
+
+    # reproduit le fonctionnement par default de cd (sans paramétre, la commande cd vas dans $HOME)
+    if [[ $# -eq 0 ]] 
+    then
+        builtin cd "$HOME"
+    else
+        builtin cd "$*"
+    fi
+
+    # empile le nouveau path 
+    PATH_HIST+=($(pwd))
+    IND_PATH_HIST=$(($IND_PATH_HIST+1))
+    # supprime l'emplacement le plus ancien si plus de N emplacement sont déja sauvegardés (LIFO)
+    if [[ ${#PATH_HIST[@]} -gt max_path_save ]]
+    then
+        IND_PATH_HIST=$(($max_path_save-1))
+        PATH_HIST=("${PATH_HIST[@]:1}")
+    fi
+    #echo "${PATH_HIST[@]}"
+    #echo IND_PATH_HIST=$IND_PATH_HIST
+    #echo  IND_PATH_SIZE=${#PATH_HIST[@]}
+}
+
+# test ecriture au meme endroit
+function cd_test()
+{
+    #if [[ $IND_PATH_HIST -gt 0 && $IND_PATH_HIST -le ${#PATH_HIST[@]} ]]
+    #then
+    #IND_PATH_HIST=$(($IND_PATH_HIST-1))
+    #fi
+    buffer="$(for ((i=0; i<${#PATH_HIST[@]}; i++))
+    do
+        if [[ "$i" -eq "$IND_PATH_HIST" ]]
+        then
+            printf "%d \e[01;91m%s\e[0m\n" $i ${PATH_HIST[i]}
+        else
+            printf "%d %s\n" $i ${PATH_HIST[i]}
+        fi
+    done)"
+    selection="$(echo "$buffer" |fzf --ansi --reverse --height=15)"
+    ind="$(echo "$selection" | cut -f1 -d' ')"
+    dir=$(echo "$selection" | sed 's/^[0-9]\ //')
+    if [[ "$dir" ]]
+    then
+        builtin cd "$dir"
+        IND_PATH_HIST=$ind
+    fi
+    #nbLines=$(for ((i=0; i<${#PATH_HIST[@]}; i++))
+    #do
+    #if [[ $i -eq $IND_PATH_HIST ]]
+    #then
+    #printf "\e[01;91m%s\e[0m \n" ${PATH_HIST[i]}
+    #else
+    #printf "%s \n" ${PATH_HIST[i]}
+    #fi
+    #done | wc -l)
+    #echo $nbLines
+    #echo "${PATH_HIST[@]}"
+    #echo IND_PATH_HIST=$IND_PATH_HIST
+    #echo  IND_PATH_SIZE=${#PATH_HIST[@]}
+}
+# retourne dans le répertoire précédent
+function cd_prev()
+{
+    if [[ $IND_PATH_HIST -gt 0 && $IND_PATH_HIST -le ${#PATH_HIST[@]} ]]
+    then
+        IND_PATH_HIST=$(($IND_PATH_HIST-1))
+    fi
+    builtin cd "${PATH_HIST[$IND_PATH_HIST]}"
+    echo -en '\e[1A'
+    echo -en '\e[2K'
+    echo -en '\e[1A'
+    echo -en '\e[2K'
+    #for ((i=0; i<${#PATH_HIST[@]}; i++))
+    #do
+        #if [[ $i -eq $IND_PATH_HIST ]]
+        #then
+            #printf "\e[01;91m%s\e[0m " ${PATH_HIST[i]}
+        #else
+            #printf "%s " ${PATH_HIST[i]}
+        #fi
+    #done
+    #echo -ne "\n"
+    #echo "${PATH_HIST[@]}"
+    #echo IND_PATH_HIST=$IND_PATH_HIST
+    #echo  IND_PATH_SIZE=${#PATH_HIST[@]}
+    }
+
+function cd_next()
+{
+    if [[ $IND_PATH_HIST -lt $((${#PATH_HIST[@]}-1)) ]]
+    then
+        IND_PATH_HIST=$(($IND_PATH_HIST+1))
+    fi
+    builtin cd "${PATH_HIST[$IND_PATH_HIST]}"
+    echo -en '\e[1A'
+    echo -en '\e[2K'
+    echo -en '\e[1A'
+    echo -en '\e[2K'
+
+    #for ((i=0; i<${#PATH_HIST[@]}; i++))
+    #do
+    #if [[ $i -eq $IND_PATH_HIST ]]
+    #then
+    #printf "\e[01;91m%s\e[0m " ${PATH_HIST[i]}
+    #else
+    #printf "%s " ${PATH_HIST[i]}
+    #fi
+    #done
+    #echo -ne "\n"
+    #echo "${PATH_HIST[@]}"
+    #echo IND_PATH_HIST=$IND_PATH_HIST
+    #echo  IND_PATH_SIZE=${#PATH_HIST[@]}
+}
+
+# execute une commande dans une split window de tmux
+ms()
+{
+    tmux splitw -h \; send-keys "$* ; clear" ENTER 
+}
+
+# fuzzy navigation 
+function cdf()
+{
+    while true; do
+        #echo -e "\e[?25l"
+        printf "\e[?25l"
+        selection=$(ls -a | fzf --height=50% \
+            --reverse \
+            --multi \
+            --cycle \
+            --info=inline \
+            --bind 'alt-k:preview-up' \
+            --bind 'alt-j:preview-down' \
+            --bind 'alt-enter:preview-down' \
+            --prompt "$(pwd) " \
+            --border "rounded" \
+            --preview-window=right:70%,border:"rounded" \
+            --preview='prev_dir=$(pwd)/{} ; echo -e "\e[01;91m >>> $prev_dir \e[0m" ;  if [ -d {} ] ; then  ls --color=always -a $prev_dir ; else less $prev_dir ; fi')
+
+        if [  "$selection" == "" ]
+        then
+            break;
+        fi
+        if [ -d $selection ]
+        then
+            if [[ "$selection" == "." ]]
+            then
+                break
+            else
+                cd "$selection"
+            fi
+        else
+            vim "$selection"
+        fi
+    done
+    #echo -e "\e[?25h"
+    printf "\e[?25h"
+}
+
+function cdfy()
+{
+    while true; do
+        printf "\e[?25l"
+        selection=$(ls -a | fzy \
+            --prompt="$(echo -e "\e[01;94m" $(pwd) "\e[0m")" \
+        )
+        if [ "$selection" == "" ]
+        then
+            break
+        fi
+        if [ -d "$selection" ]
+        then
+            cd "$selection"
+            if [ "$selection" == "." ]
+            then
+                break 
+            fi
+        else
+            vim "$selection"
+        fi
+    done
+    printf "\e[?25h"
+}
+
+# colorisation de man
+# https://debian-facile.org/doc:systeme:most:man-en-couleur
+# https://fr.linux-console.net/?p=8204
+function man() 
+{
+    LESS_TERMCAP_mb=$'\e[01;33m' \
+        LESS_TERMCAP_md=$'\e[01;94m' \
+        LESS_TERMCAP_me=$'\e[0m' \
+        LESS_TERMCAP_us=$'\e[00;96m' \
+        LESS_TERMCAP_ue=$'\e[0m' \
+        LESS_TERMCAP_so=$'\e[1;93;44m' \
+        LESS_TERMCAP_se=$'\e[0m' \
+        command man "$@"
+    }
+
+# Ce script permet de formater un fichier markdown afin de pouvoir le lire avec mdp
+# mdp utilise des séparateurs du type '\n------\n' afin de séparer chaque slide
+# ce script ajoute ce séparateur de maniére réguliére tout au long du fichier markdown afin de pouvoir le lire avec mdp sans débordement
+function fmdp()
+{
+    # test le nombre de paramétres
+    if [ $# -ne 1 ]; 
+    then
+        echo argument invalide : nombre d\'argument invalide.
+        return -1
+    fi
+    # test si le fichier existe
+    if [ ! -f $1 ];
+    then
+        echo argument invalide : fichier introuvable.
+        return -1
+    fi
+    mdFile=$1
+    nbLine=$(wc -l $mdFile | cut -f1 -d\ ) # extrait le nombre de ligne du fichier
+    # divide by one to round to lower integer
+    maxLine=$(echo $LINES*0.7/1 | bc)
+    nbSlide=$(expr $nbLine / $maxLine)
+    newFileName=/tmp/fmdp/mdp_$1
+    # creer le repertoire temporaire
+    if [ ! -d /tmp/fmdp ];
+    then
+        mkdir /tmp/fmdp
+    fi
+    # si le fichier formaté temporaire existe déja, on le supprime
+    if [ -f $newFileName ]; 
+    then
+        rm $newFileName
+    fi
+    # on formate le fichier markdown
+    for (( i=0; i<=$nbSlide; i++ ))
+    do
+        d=$(($i * $maxLine + $maxLine))
+        head -n$d $mdFile | tail -$maxLine >> $newFileName
+        echo -e "\n----\n" >> $newFileName
+    done
+    mdp --nofade $newFileName
+}
+
+function search_w3m()
+{
+    duckUrl="https://duckduckgo.com/?q="
+    str=$(echo $@ | sed 's/\ /+/g')
+    searchUrl="$duckUrl$str"
+    /bin/w3m $searchUrl
+}
+
+function call_w3m()
+{
+    duckUrl="https://duckduckgo.com/?q="
+    if [ $# -eq 0 ]
+    then
+        /bin/w3m $duckUrl
+    else
+        str=$(echo $@ | sed 's/\ /+/g')
+        searchUrl="$duckUrl$str"
+        /bin/w3m $searchUrl
+    fi
+}
+#https://man.freebsd.org/cgi/man.cgi?query=memmove&manpath=FreeBSD+14.2-RELEASE+and+Ports
+
+function search_man_bsd()
+{
+    bsdManPageUrl="https://man.freebsd.org/cgi/man.cgi?query="
+    if [ $# -eq 0 ]
+    then
+        /bin/w3m $bsdManPageUrl
+    else
+        str=$(echo $@ | sed 's/\ /+/g')
+        searchUrl="$bsdManPageUrl$str"
+        /bin/w3m $searchUrl
+    fi
+}
+
+function search_wiki()
+{
+    wikiSearUrl="https://fr.wikipedia.org/?search="
+    if [ $# -eq 0 ]
+    then
+        /bin/w3m $wikiSearUrl
+    else
+        str=$(echo $@ | sed 's/\ /+/g')
+        searchUrl="$wikiSearUrl$str&ns0=1"
+        /bin/w3m $searchUrl
+    fi
+}
+
+function search_git()
+{
+    searUrl="https://github.com/search?q="
+    if [ $# -eq 0 ]
+    then
+        /bin/w3m $searUrl
+    else
+        str=$(echo $@ | sed 's/\ /+/g')
+        searchUrl="$searUrl$str&ns0=1"
+        /bin/w3m $searchUrl
+    fi
+}
+
+function print_git_info()
+{
+    STR=""
+    #getting the repository name and if it has a remote or not
+    REPOS=$(git remote get-url origin 2> /dev/null)
+    RET=$?
+
+
+    if [ $RET -eq 128 ] ; then    # not a repo
+        return $RET         # quit
+    elif [ $RET -eq 0 ]; then  #repos distant ok 
+        REPOS=${REPOS##*/}; REPOS=${REPOS%%.*}
+        STR="$STR\033[01;96m[$REPOS]\033[0m" # affiche repos en vert
+    elif [ $RET -eq 2 ]; then #pas de repos distant  
+        STR="$STR\033[01;91m[local]\033[0m" # affiche 'local' en rouge
+    fi
+
+
+    MODIF=""
+    if [ -n "$(git status -s 2> /dev/null)" ]; then
+        MODIF='*'
+    fi
+
+    BRANCH_FULL="$(git branch -vv 2> /dev/null| grep \* | sed 's/\*//')"    # recupére les infos surr la branche courante
+    BRANCH=$(echo "$BRANCH_FULL" | cut --delimiter=' ' -f2) # extrait le nom de la branch courante
+    if [ -z "$(echo $BRANCH_FULL | grep "origin")" ]; then # pas de branch distante
+        STR="$STR \033[01;91m[$BRANCH$MODIF]\033[0m"           #affiche branch en rouge
+    else
+        if [ -n "$(echo $BRANCH_FULL | grep avance)" ]; then # branch local en avance
+            STR="$STR \033[01;93m[$BRANCH$MODIF]\033[0m"  # affiche branch en jaune
+        else
+            STR="$STR \033[01;92m[$BRANCH$MODIF]\033[0m"  # affiche branch en vert
+        fi
+    fi 
+
+    echo -e $STR
+}
+
+function nice_history()
+{
+    HISTTIMEFORMAT="\e[01;91m[%F] \e[01;95m(%T) \e[01;97m : "
+    echo -e "$(history)\n"
+    #printf "$(history)\n"
+    HISTTIMEFORMAT="%F %T : "
+}
+
+# Ce script permet de remplacer les suppression par des déplacement dans une corbeille définie par l'utilisateur grâce la variable d'environnement $TRASH_RM_SAFE.
+# Si aucune variable $TRASH_RM_SAFE n'est définie, le répertoire '~/.trash' est utilisé comme corbeille.
+# Le moyen le plus simple d'utiliser ce script est de définir un alias remplaçant /bin/rm par rm_safe
+function rm_safe ()
+{
+    trash_config_file="/home/pierre/.local/share/rm_safe/trash_rm_safe"
+    # On peut configurer une corbeille personnalisé en indiquant sont emplacement dans le fichier
+    # $trash_config_file
+    if [ -f "$trash_config_file" ] # si l'utilisateur a configurer le fichier definissant trash
+    then
+        #echo trash already configured, $TRASH_RM_SAFE
+        TRASH_RM_SAFE=$(cat $trash_config_file)
+    else    # si l'utilisateur n'a pas configuré le fichier $trash_config_file
+        TRASH_RM_SAFE=~/.trash  # on utilise la corbeille par default
+        #echo trash not configured, use ~/.trash
+    fi
+
+    if [ ! -d "$TRASH_RM_SAFE" ] #si le repertoire $TRASH_RM_SAFE configuré dans le fichier $trash_config_file n'existe pas
+    then
+        #echo trash directory don\'t exist, create a new one
+        mkdir -p "$TRASH_RM_SAFE"
+    fi
+
+    if [ $# -eq 0 ]
+    then
+        echo -e "Bad usage..."
+        echo -e "rm [FILES]\t\tMove file to $TRASH_RM_SAFE"
+        echo -e "rm -p, --purge\t\tMove file in $TRASH_RM_SAFE to /tmp/rm_trash/"
+        return
+    else
+        if [ $# -eq 1 ]
+        then
+            if [ "$1" == "--purge" ] || [ "$1" == "-p" ]
+            then
+                echo "Voulez vous vider $TRASH_RM_SAFE ?"
+                echo "(Y/n)"
+                read READ
+                if [[ "$READ" == "Y" ]]
+                then
+                    if [ "$(ls -A $TRASH_RM_SAFE)" ]; then
+                        TMP_RM_DIR=/tmp/rm_trash
+                        if [[ ! -d "$TMP_RM_DIR" ]]; then
+                            mkdir $TMP_RM_DIR
+                        fi
+                        mv -f --suffix=$(date "+%H_%M_%S_%m%d%y") $TRASH_RM_SAFE/* $TRASH_RM_SAFE/.* /tmp/rm_trash 2> /dev/null
+                        echo "$TRASH_RM_SAFE cleaned."
+                    else
+                        echo $TRASH_RM_SAFE is empty
+
+
+                    fi
+                else
+                    echo "Avoid."
+                fi
+                return
+            fi
+        fi
+    fi
+
+    for f in $*
+    do
+        if [[ -z "$(echo -n $f | grep -E "^-")" ]]
+        then
+            if [[ -a "$f" || -L "$f" ]]; then
+                NEWFILENAME=$(basename $f)\_$(date "+%d%m%y_%H_%M_%S")
+                NEWDIRNAME=$TRASH_RM_SAFE$(dirname $(readlink -f $f))
+                #echo $NEWDIRNAME
+                #echo $NEWFILENAME
+                mkdir -p $NEWDIRNAME
+                mv -f  $f $NEWDIRNAME/$NEWFILENAME
+                find $NEWDIRNAME/$NEWFILENAME -exec touch {} +
+            else
+                echo "error : file not found"
+            fi
+            #else
+            #echo "error file name begining by '-'" 
+        fi
+    done
+}
+function xtitle () 
+{ 
+    echo -n -e "\033]0;$*\007"
+}
+
+function ssh-agent ()
+{
+    eval $(/usr/bin/ssh-agent $@)
+}
+
+function new_line()
+{
+    printf "\n$ "
+}

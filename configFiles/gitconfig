@@ -1,0 +1,40 @@
+[http]
+    sslVerify = false
+[safe]
+    directory = /home/pierre/
+
+[user]
+    name = Lonpie
+    email = none@none.com
+
+[init]
+    defaultBranch = main
+
+[push]
+    default = upstream
+
+[merge]
+    tool = fugitive
+
+[mergetool "fugitive"]
+    cmd = vim -f -c "Gvdiffsplit!" "$MERGED"
+
+[alias]
+    st=status
+    b=branch -vv
+    s=switch
+    d=difftool
+    c=checkout
+    cb=checkout -b
+
+[core]
+    excludesFile = /home/pierre/.gitignore
+    editor = vim
+
+;[diff]
+    ;external = /bin/vimdiff
+    ;renames = true
+
+[difftool]
+    external = /bin/vimdiff
+    prompt = false
