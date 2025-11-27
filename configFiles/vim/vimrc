@@ -15,15 +15,18 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:mapleader=','
 nnoremap <leader>k  <Plug>(Vman)
-
+let maplocalleader=";"
+autocmd FileType tidal setlocal commentstring=--\ %s
 " crossdebug rpi buildroot
-let g:termdebugger=['../buildroot-2025.05/output/host/bin/aarch64-buildroot-linux-gnu-gdb', '-ix', '../buildroot-2025.05/output/staging/usr/share/buildroot/gdbinit', 'main.elf', '-ex', 'target remote 192.168.1.41:2345']
+" let g:termdebugger=['../buildroot-2025.05/output/host/bin/aarch64-buildroot-linux-gnu-gdb', '-ix', '../buildroot-2025.05/output/staging/usr/share/buildroot/gdbinit', 'main.elf', '-ex', 'target remote 192.168.1.41:2345']
+" let g:termdebugger=['gdb-multiarch', '-ex', 'set architecture aarch64' , '-ex', 'target remote localhost:1235']
 " affiche le contenu des regitres et permet la selection pour en coller un
 nnoremap "p :reg <bar> exec 'normal! "'.input('>').'p'<CR>
 " affiche les buffers ouvert et permter la selection pour en ouvrir un
 nnoremap <leader>b :ls <bar> exec ':b'.input('>')<CR>
 cnoreabbrev bb ls <bar> exec ':b'.input('>')
-
+" Creer l'alias Delete pour la commande termdebug Clear permettant de retirer un breakpoint
+command Delete Clear
 packadd! termdebug
 
 nnoremap J mbJ`b
@@ -113,6 +116,7 @@ call plug#begin('~/.vim/plugged/')
 Plug 'tpope/vim-commentary' 
 Plug 'tpope/vim-fugitive'
 Plug 'vim-utils/vim-man'
+Plug 'tidalcycles/vim-tidal'
 call plug#end()
 """""""""""""""""""""""""""""""""""""
 " CONFIGAURATION PARAMETRES GÉNÉRAUX"
@@ -289,15 +293,16 @@ nnoremap <C-j> <C-W>j
 nnoremap <C-k> <C-W>k
 nnoremap <C-h> <C-W>h
 nnoremap <C-l> <C-W>l
-"deplacement des fenêtres
-execute "set <M-j>=\ej"
-execute "set <M-k>=\ek"
-execute "set <M-h>=\eh"
-execute "set <M-l>=\el"
-nnoremap <A-j> <C-W>J
-nnoremap <A-k> <C-W>K
-nnoremap <A-h> <C-W>H
-nnoremap <A-l> <C-W>L
+
+""deplacement des fenêtres
+"execute "set <M-j>=\ej"
+"execute "set <M-k>=\ek"
+"execute "set <M-h>=\eh"
+"execute "set <M-l>=\el"
+"nnoremap <A-j> <C-W>J
+"nnoremap <A-k> <C-W>K
+"nnoremap <A-h> <C-W>H
+"nnoremap <A-l> <C-W>L
 
 "autocmd FileType c noremap c <ESC>1i//kj
 

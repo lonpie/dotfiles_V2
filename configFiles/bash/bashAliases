@@ -11,8 +11,8 @@ alias lxd='sudo lxd'
 alias lxc='sudo lxc'
 
 ##======= DOTFILES ========
-#alias dotfiles='/usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME"'
-#alias lg='dotfiles ls-tree --full-tree -r --name-only HEAD'
+alias dotfiles='/usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME"'
+alias lg='dotfiles ls-tree --full-tree -r --name-only HEAD'
 
 alias t='todo-txt'
 #alias lynx='lynx --cfg=/home/pierre/.lynx.cfg'
@@ -85,6 +85,8 @@ alias ipa='ip -br a'
 alias ipr='ip route'
 alias gzip='gzip -v'
 alias gunzip='gunzip -v'
+alias reboot='/sbin/reboot'
+alias poweroff='/sbin/poweroff'
 
 alias monip='echo -e "$(curl --silent http://ipinfo.io/ip)"'
 alias maloc='echo $(curl --silent https://ipcheck.me/fr/$(curl --silent http://ipinfo.io/ip)) | jq .'

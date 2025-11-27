@@ -1,7 +1,7 @@
-setxkbmap -option caps:escape
-xmodmap -e "keycode 65 = space space space space space space space space space "
-/usr/bin/xset r rate 200 30
-xrdb ~/.Xresources
-xautolock -time 10 -locker xlock -detectsleep &
+# setxkbmap -option caps:escape
+# xmodmap -e "keycode 65 = space space space space space space space space space "
+# /usr/bin/xset r rate 200 30
+# xrdb ~/.Xresources
+# xautolock -time 10 -locker xlock -detectsleep &
 startxfce4
 #startplasma-x11

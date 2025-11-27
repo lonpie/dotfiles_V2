@@ -7,10 +7,17 @@ confDir=configFiles
 
 function __do_backup__()
 {
+    backDirFullPath=$(pwd)/$bakDir
+    if [ ! -d $backDirFullPath ]
+    then 
+        echo Le répertoire $backDirFullPath n\'existe pas... 
+        echo Création de $backDirFullPath...
+        mkdir -p $backDirFullPath
+    fi
     for f in $configFiles
     do
-        echo -e "\t - cp -rf $HOME/.$f $(pwd)/$bakDir/$f"
-        cp -rf $HOME/.$f $(pwd)/$bakDir/$f 2> /dev/null
+        echo -e "\t - cp -rf $HOME/.$f $backDirFullPath"
+        cp -rf $HOME/.$f $backDirFullPath 2> /dev/null
     done
 }
 

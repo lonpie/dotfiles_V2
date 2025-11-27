@@ -47,11 +47,11 @@ j: history-search-forward
 k: history-search-backward
 
 # configure le raccourci C-r pour la fonction vi-redo
-"\C-r": nop
+# "\C-r": nop
 set keymap vi-command
 "\C-r": vi-redo  
 set keymap vi-insert
-"\C-r": nop 
+# "\C-r": nop 
 "kj": vi-movement-mode  
 
 # ***********************
